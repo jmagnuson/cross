@@ -16,33 +16,34 @@ main() {
 
     apt-get update
     local purge_list=()
-    for dep in ${dependencies[@]}; do
-        if ! dpkg -L $dep; then
-            apt-get install --no-install-recommends --assume-yes $dep
-            purge_list+=( $dep )
+    for dep in "${dependencies[@]}"; do
+        if ! dpkg -L "${dep}"; then
+            apt-get install --assume-yes --no-install-recommends "${dep}"
+            purge_list+=( "${dep}" )
         fi
     done
 
-    local td="$(mktemp -d)"
+    local td
+    td="$(mktemp -d)"
 
-    pushd $td
+    pushd "${td}"
 
-    curl https://cmake.org/files/v${version%.*}/cmake-$version.tar.gz | \
+    curl "https://cmake.org/files/v${version%.*}/cmake-${version}.tar.gz" | \
         tar --strip-components 1 -xz
 
     ./bootstrap
-    make -j$(nproc)
+    make "-j$(nproc)"
     make install
 
     # clean up
     popd
 
     if (( ${#purge_list[@]} )); then
-      apt-get purge --auto-remove -y ${purge_list[@]}
+      apt-get purge --auto-remove -y "${purge_list[@]}"
     fi
 
-    rm -rf $td
-    rm $0
+    rm -rf "${td}"
+    rm "${0}"
 }
 
 main "${@}"
